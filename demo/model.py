@@ -297,14 +297,13 @@ def get_table_of_latents():
     print("object saved")
 
 
-def normalize_and_get_table_of_latents():
-    img_folder = os.path.join('/home/nird/glow/demo/', 'Female_Combinations')
-    file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Female_head_combinations_normalized_latents')
+def normalize_and_get_table_of_latents(img_folder, file_name_to_save):
+
     images_list = []
     images_names = []
     latents_list = []
 
-    for img in os.listdir(img_folder):
+    for img in sorted(os.listdir(img_folder)):
         images_names.append(img)
         img = os.path.join(img_folder, img)
         img = Image.open(img)
@@ -343,10 +342,13 @@ def decode_orig_and_pred(path, orig_file_name, pred_file_name):
     print("files saved to disk")
 
 
+
 if __name__ == '__main__':
     # test()
     # get_table_of_latents()
-    normalize_and_get_table_of_latents()
+    img_folder = os.path.join('/home/nird/glow/demo/', 'Male')
+    file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Male_head_combinations_normalized_latents_new')
+    normalize_and_get_table_of_latents(img_folder,file_name_to_save)
     # path = '/home/nird/glow/demo/experiments/'
     # orig_file_name ='other_latent'
     # pred_file_name = 'other_latent_pred'
