@@ -1,9 +1,26 @@
 import numpy as np
 import tensorflow as tf
+import os
+import imageio
 import time
+import pickle
 from tqdm import tqdm
 from PIL import Image
 from threading import Lock
+
+
+
+
+def save_obj(obj, name):
+    """:param obj: object to save
+       :param: name: name of the object"""
+    with open(name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name):
+    """ :param: name: name of the object to load"""
+    with open(name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
 lock = Lock()
 
@@ -227,35 +244,110 @@ def random(bs=1, eps_std=0.7):
 
 
 def test():
-    img = Image.open('test/img.png')
-    img = np.reshape(np.array(img), [1, 256, 256, 3])
+    # img = Image.open('test/img.png')
+    # img = np.reshape(np.array(img), [1, 256, 256, 3])
 
     # Encoding speed
-    eps = encode(img)
-    t = time.time()
-    for _ in tqdm(range(10)):
-        eps = encode(img)
-    print("Encoding latency {} sec/img".format((time.time() - t) / (1 * 10)))
+    # eps = encode(img)
+    # t = time.time()
+    # for _ in tqdm(range(10)):
+    #     eps = encode(img)
+    # print("Encoding latency {} sec/img".format((time.time() - t) / (1 * 10)))
 
     # Decoding speed
-    dec = decode(eps)
-    t = time.time()
-    for _ in tqdm(range(10)):
-        dec = decode(eps)
-    print("Decoding latency {} sec/img".format((time.time() - t) / (1 * 10)))
-    img = Image.fromarray(dec[0])
-    img.save('test/dec.png')
+    # dec = decode(eps)
+    # t = time.time()
+    # # for _ in tqdm(range(10)):
+    # #     dec = decode(eps)
+    # # print("Decoding latency {} sec/img".format((time.time() - t) / (1 * 10)))
+    # img = Image.fromarray(dec[0])
+    # img.save('test/dec.png')
+    #
+    # # Manipulation
+    # dec, _ = manipulate(eps, _TAGS.index('Smiling'), 0.66)
+    # img = Image.fromarray(dec[0])
+    # img.save('test/smile.png')
 
-    # Manipulation
-    dec, _ = manipulate(eps, _TAGS.index('Smiling'), 0.66)
-    img = Image.fromarray(dec[0])
-    img.save('test/smile.png')
+
+    # warm start
+    for i in range(1):
+        _img, _z = random(1)
+        print(f'shape of z: {_z.shape}')
+        img = Image.fromarray(_img[0])
+        img.save('test/radnom_img_'+str(i)+'.png')
+        # _z = encode(_img)
+        print(f'generated {i} images')
 
 
-# warm start
-_img, _z = random(1)
-_z = encode(_img)
-print("Warm started tf model")
+def get_table_of_latents():
+    img_folder = os.path.join('/home/nird/glow/demo/', 'Female_Combinations_normalized')
+    latents_list = []
+    file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Female_head_combinations_normalized_latents')
+
+    for img in os.listdir(img_folder):
+        img = os.path.join(img_folder, img)
+        img = Image.open(img)
+        img = np.array(img)
+        curr_latent = encode(img)
+        latents_list.append(curr_latent)
+
+    latents_list = np.array(latents_list)
+    latents_list = np.squeeze(latents_list, axis=1)
+    save_obj(latents_list, file_name_to_save)
+    print("object saved")
+
+
+def normalize_and_get_table_of_latents():
+    img_folder = os.path.join('/home/nird/glow/demo/', 'Female_Combinations')
+    file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Female_head_combinations_normalized_latents')
+    images_list = []
+    images_names = []
+    latents_list = []
+
+    for img in os.listdir(img_folder):
+        images_names.append(img)
+        img = os.path.join(img_folder, img)
+        img = Image.open(img)
+        img = np.array(img)
+        images_list.append(img)
+
+    images_np_array = np.array(images_list)
+
+    max_value = images_np_array.max()
+    min_value = images_np_array.min()
+    for np_image, img_name in zip(images_np_array, images_names):
+        np_image_normalized = (np_image - min_value) / (max_value - min_value)
+        curr_latent = encode(np_image_normalized)
+        latents_list.append(curr_latent)
+
+    latents_list = np.array(latents_list)
+    latents_list = np.squeeze(latents_list, axis=1)
+    save_obj(latents_list, file_name_to_save)
+    print("object saved")
+
+
+def decode_orig_and_pred(path, orig_file_name, pred_file_name):
+    orig_path = os.path.join(path,orig_file_name)
+    pred_path = os.path.join(path, pred_file_name)
+    orig = load_obj(orig_path)
+    pred = load_obj(pred_path)
+    decoded_orig = decode(orig)
+    decoded_pred = decode(pred)
+    img_orig = Image.fromarray(decoded_orig[0])
+    img_pred = Image.fromarray(decoded_pred[0])
+    name_orig = 'orig_decoded'
+    name_pred = 'pred_decoded'
+
+    img_orig.save(os.path.join(path, name_orig+'.png'))
+    img_pred.save(os.path.join(path, name_pred+'.png'))
+    print("files saved to disk")
+
 
 if __name__ == '__main__':
-    test()
+    # test()
+    # get_table_of_latents()
+    normalize_and_get_table_of_latents()
+    # path = '/home/nird/glow/demo/experiments/'
+    # orig_file_name ='other_latent'
+    # pred_file_name = 'other_latent_pred'
+    # decode_orig_and_pred(path, orig_file_name, pred_file_name)
