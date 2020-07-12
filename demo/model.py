@@ -312,11 +312,11 @@ def normalize_and_get_table_of_latents(img_folder, file_name_to_save):
 
     images_np_array = np.array(images_list)
 
-    max_value = images_np_array.max()
-    min_value = images_np_array.min()
+    # max_value = images_np_array.max()
+    # min_value = images_np_array.min()
     for np_image, img_name in zip(images_np_array, images_names):
-        np_image_normalized = (np_image - min_value) / (max_value - min_value)
-        curr_latent = encode(np_image_normalized)
+        # np_image_normalized = (np_image - min_value) / (max_value - min_value)
+        curr_latent = encode(np_image)
         latents_list.append(curr_latent)
 
     latents_list = np.array(latents_list)
@@ -325,31 +325,88 @@ def normalize_and_get_table_of_latents(img_folder, file_name_to_save):
     print("object saved")
 
 
-def decode_orig_and_pred(path, orig_file_name, pred_file_name):
-    orig_path = os.path.join(path,orig_file_name)
-    pred_path = os.path.join(path, pred_file_name)
-    orig = load_obj(orig_path)
-    pred = load_obj(pred_path)
-    decoded_orig = decode(orig)
-    decoded_pred = decode(pred)
-    img_orig = Image.fromarray(decoded_orig[0])
-    img_pred = Image.fromarray(decoded_pred[0])
-    name_orig = 'orig_decoded'
-    name_pred = 'pred_decoded'
+def decode_orig_and_pred(path, orig_file_name_female,orig_file_name_male, pred_file_name_female, pred_file_name_male):
+    orig_path_female = os.path.join(path,orig_file_name_female)
+    orig_path_male = os.path.join(path,orig_file_name_male)
 
-    img_orig.save(os.path.join(path, name_orig+'.png'))
-    img_pred.save(os.path.join(path, name_pred+'.png'))
+    pred_path_female = os.path.join(path, pred_file_name_female)
+    pred_path_male = os.path.join(path, pred_file_name_male)
+
+    orig_female = load_obj(orig_path_female)
+    orig_male = load_obj(orig_path_male)
+
+    pred_female = load_obj(pred_path_female)
+    pred_male = load_obj(pred_path_male)
+
+
+    decoded_orig_female = decode(orig_female)
+    decoded_orig_male = decode(orig_male)
+
+    decoded_pred_female = decode(pred_female)
+    decoded_pred_male = decode(pred_male)
+
+
+    img_orig_female = Image.fromarray(decoded_orig_female[0])
+    img_orig_male = Image.fromarray(decoded_orig_male[0])
+
+    img_pred_female = Image.fromarray(decoded_pred_female[0])
+    img_pred_male = Image.fromarray(decoded_pred_male[0])
+
+    name_orig_female = 'orig_decoded_female'
+    name_orig_male = 'orig_decoded_male'
+
+    name_pred_female = 'pred_decoded_female'
+    name_pred_male = 'pred_decoded_male'
+
+
+    img_orig_female.save(os.path.join(path, name_orig_female+'.png'))
+    img_orig_male.save(os.path.join(path, name_orig_male+'.png'))
+
+    img_pred_female.save(os.path.join(path, name_pred_female+'.png'))
+    img_pred_male.save(os.path.join(path, name_pred_male+'.png'))
+
     print("files saved to disk")
+
+def encode_decode_with_and_without_normalize(img_folder,img):
+    img = os.path.join(img_folder, img)
+    img = Image.open(img)
+    img = np.array(img)
+    img_normalized = (img - img.min()) / (img.max() - img.min())
+    encoded_orig = encode(img)
+    encoded_normalized = encode(img_normalized)
+    decoded_orig = decode(encoded_orig)
+    decoded_normalized = decode(encoded_normalized)
+    img_orig_decoded = Image.fromarray(decoded_orig[0])
+    img_normalized_decoded = Image.fromarray(decoded_normalized[0])
+    name_img_orig_decoded = 'img_orig_decoded'
+    name_img_normalized_decoded = 'img_normalized_decoded'
+    img_orig_decoded.save(os.path.join(img_folder, name_img_orig_decoded + '.png'))
+    img_normalized_decoded.save(os.path.join(img_folder, name_img_normalized_decoded + '.png'))
+    print("saved both files")
+
 
 
 
 if __name__ == '__main__':
+    list_of_visible_devices = "2,3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = list_of_visible_devices
     # test()
     # get_table_of_latents()
-    img_folder = os.path.join('/home/nird/glow/demo/', 'Male')
-    file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Male_head_combinations_normalized_latents_new')
-    normalize_and_get_table_of_latents(img_folder,file_name_to_save)
-    # path = '/home/nird/glow/demo/experiments/'
-    # orig_file_name ='other_latent'
-    # pred_file_name = 'other_latent_pred'
-    # decode_orig_and_pred(path, orig_file_name, pred_file_name)
+    # img_folder = os.path.join('/home/nird/glow/demo/', 'Female')
+    # file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Female_head_combinations_normalized_latents_new')
+    # normalize_and_get_table_of_latents(img_folder, file_name_to_save)
+    #
+    # img_folder = os.path.join('/home/nird/glow/demo/', 'Male')
+    # file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Male_head_combinations_normalized_latents_new')
+    # normalize_and_get_table_of_latents(img_folder,file_name_to_save)
+
+    path = '/home/nird/glow/demo/experiments/'
+    orig_file_name_female ='other_latent_female'
+    orig_file_name_male ='other_latent_male'
+    pred_file_name_female = 'other_latent_female_pred'
+    pred_file_name_male = 'other_latent_male_pred'
+    decode_orig_and_pred(path, orig_file_name_female, orig_file_name_male, pred_file_name_female, pred_file_name_male)
+    #
+    # file_name = 'Opened_GLOBAL_R10_Smile_Lips_Opened_GLOBAL10_Female.jpg'
+    # encode_decode_with_and_without_normalize(path, file_name)
+
