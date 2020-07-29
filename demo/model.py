@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import os
+import matplotlib.pyplot as plt
 import imageio
 import time
 import pickle
@@ -325,42 +326,57 @@ def normalize_and_get_table_of_latents(img_folder, file_name_to_save):
     print("object saved")
 
 
-def decode_orig_and_pred(path, orig_file_name_female,orig_file_name_male, pred_file_name_female, pred_file_name_male):
-    orig_path_female = os.path.join(path,orig_file_name_female)
-    orig_path_male = os.path.join(path,orig_file_name_male)
+def decode_orig_and_pred(path, orig_reference_file_name_female, orig_reference_file_name_male,orig_other_file_name_female,orig_other_file_name_male, pred_file_name_female, pred_file_name_male, alpha, base_num, other_num):
+    orig_path_reference_female = os.path.join(path,orig_reference_file_name_female)
+    orig_path_reference_male = os.path.join(path, orig_reference_file_name_male)
+
+    orig_path_other_female = os.path.join(path,orig_other_file_name_female)
+    orig_path_othermale = os.path.join(path,orig_other_file_name_male)
 
     pred_path_female = os.path.join(path, pred_file_name_female)
     pred_path_male = os.path.join(path, pred_file_name_male)
 
-    orig_female = load_obj(orig_path_female)
-    orig_male = load_obj(orig_path_male)
+    orig_reference_female = load_obj(orig_path_reference_female)
+    orig_reference_male = load_obj(orig_path_reference_male)
+
+    orig_other_female = load_obj(orig_path_other_female)
+    orig_other_male = load_obj(orig_path_othermale)
 
     pred_female = load_obj(pred_path_female)
     pred_male = load_obj(pred_path_male)
 
+    decoded_orig_reference_female = decode(orig_reference_female)
+    decoded_orig_reference_male = decode(orig_reference_male)
 
-    decoded_orig_female = decode(orig_female)
-    decoded_orig_male = decode(orig_male)
+    decoded_orig_other_female = decode(orig_other_female)
+    decoded_orig_other_male = decode(orig_other_male)
 
     decoded_pred_female = decode(pred_female)
     decoded_pred_male = decode(pred_male)
 
+    img_orig_reference_female = Image.fromarray(decoded_orig_reference_female[0])
+    img_orig_reference_male = Image.fromarray(decoded_orig_reference_male[0])
 
-    img_orig_female = Image.fromarray(decoded_orig_female[0])
-    img_orig_male = Image.fromarray(decoded_orig_male[0])
+    img_orig_other_female = Image.fromarray(decoded_orig_other_female[0])
+    img_orig_other_male = Image.fromarray(decoded_orig_other_male[0])
 
     img_pred_female = Image.fromarray(decoded_pred_female[0])
     img_pred_male = Image.fromarray(decoded_pred_male[0])
 
-    name_orig_female = 'orig_decoded_female'
-    name_orig_male = 'orig_decoded_male'
+    name_orig_reference_female = 'orig_decoded_reference_female'
+    name_orig_reference_male = 'orig_decoded_reference_male'
+
+    name_orig_other_female = 'orig_decoded_other_female'
+    name_orig_other_male = 'orig_decoded_other_male'
 
     name_pred_female = 'pred_decoded_female'
     name_pred_male = 'pred_decoded_male'
 
+    img_orig_reference_female.save(os.path.join(path, name_orig_reference_female + '.png'))
+    img_orig_reference_male.save(os.path.join(path, name_orig_reference_male + '.png'))
 
-    img_orig_female.save(os.path.join(path, name_orig_female+'.png'))
-    img_orig_male.save(os.path.join(path, name_orig_male+'.png'))
+    img_orig_other_female.save(os.path.join(path, name_orig_other_female+'.png'))
+    img_orig_other_male.save(os.path.join(path, name_orig_other_male+'.png'))
 
     img_pred_female.save(os.path.join(path, name_pred_female+'.png'))
     img_pred_male.save(os.path.join(path, name_pred_male+'.png'))
@@ -399,13 +415,18 @@ if __name__ == '__main__':
     # img_folder = os.path.join('/home/nird/glow/demo/', 'Male')
     # file_name_to_save = os.path.join('/home/nird/glow/demo/', 'Male_head_combinations_normalized_latents_new')
     # normalize_and_get_table_of_latents(img_folder,file_name_to_save)
-
-    path = '/home/nird/glow/demo/experiments/'
-    orig_file_name_female ='other_latent_female'
-    orig_file_name_male ='other_latent_male'
+    experiment_name = 'ref_500_other_900'
+    path = os.path.join('/home/nird/glow/demo/experiments/',experiment_name)
+    orig_reference_file_name_female = 'reference_latent_female'
+    orig_reference_file_name_male = 'reference_latent_male'
+    orig_other_file_name_female ='other_latent_female'
+    orig_other_file_name_male ='other_latent_male'
     pred_file_name_female = 'other_latent_female_pred'
     pred_file_name_male = 'other_latent_male_pred'
-    decode_orig_and_pred(path, orig_file_name_female, orig_file_name_male, pred_file_name_female, pred_file_name_male)
+    alpha = '5'
+    base_num = '0'
+    other_num = '50'
+    decode_orig_and_pred(path, orig_reference_file_name_female,orig_other_file_name_male,orig_other_file_name_female, orig_other_file_name_male, pred_file_name_female, pred_file_name_male,alpha,base_num,other_num)
     #
     # file_name = 'Opened_GLOBAL_R10_Smile_Lips_Opened_GLOBAL10_Female.jpg'
     # encode_decode_with_and_without_normalize(path, file_name)
